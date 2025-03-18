@@ -1,4 +1,4 @@
-# Arch Linux Setup Script
+# My personal setup script for Software & Tools I most commonly use.
 
 ## Overview
 This script automates the setup of a fresh Arch Linux installation by installing essential packages, setting up configurations, and applying useful customizations.
