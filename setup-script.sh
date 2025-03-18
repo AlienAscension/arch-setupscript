@@ -82,7 +82,8 @@ fi
 # Install AUR packages
 echo "Installing AUR packages..."
 yay -S --noconfirm \
-    nextcloud-client
+    nextcloud-client \
+    signal-desktop
 
 # Optional packages (uncomment if needed)
 # yay -S --noconfirm dropbox
