@@ -63,7 +63,7 @@ sudo pacman -S --noconfirm --needed \
     htop \
     docker \
     docker-compose \
-    gpg \
+    gnugpg \
     rsync \
     openssh \
     man-db \
