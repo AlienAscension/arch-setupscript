@@ -36,6 +36,80 @@ if [ "$(id -u)" = 0 ]; then
     exit 1
 fi
 
+#!/bin/bash
+
+# Arch Linux Setup Script
+# Author: Linus
+# Description: Automates the setup of a new Arch Linux installation with preferred packages and configurations
+
+set -e  # Exit on error
+
+# Color codes for better readability
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+# Helper functions
+log_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+log_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Check if running as root
+if [ "$(id -u)" = 0 ]; then
+    log_error "This script should not be run as root or with sudo"
+    exit 1
+fi
+
+# Get the directory where the script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+# Check if .env file exists in the script directory and source it
+ENV_FILE="${SCRIPT_DIR}/.env"
+if [ -f "$ENV_FILE" ]; then
+    log_info "Loading environment variables from $ENV_FILE"
+    source "$ENV_FILE"
+
+    # Verify required variables are set
+    missing_vars=()
+
+    # Git configuration variables
+    [ -z "$GIT_USER_EMAIL" ] && missing_vars+=("GIT_USER_EMAIL")
+    [ -z "$GIT_USER_NAME" ] && missing_vars+=("GIT_USER_NAME")
+
+    # Password store config
+    [ -z "$PASS_STORE_GIT_REMOTE" ] && missing_vars+=("PASS_STORE_GIT_REMOTE")
+
+    # Check for other optional variables that might be used
+    # [ -z "$SOME_OTHER_VAR" ] && log_warning "SOME_OTHER_VAR is not set in .env"
+
+    # If any required variables are missing, exit with error
+    if [ ${#missing_vars[@]} -gt 0 ]; then
+        log_error "The following required variables are missing in $ENV_FILE:"
+        for var in "${missing_vars[@]}"; do
+            log_error "- $var"
+        done
+        exit 1
+    fi
+else
+    log_error "Environment file not found at $ENV_FILE"
+    log_error "Please create this file with the required variables."
+    exit 1
+fi
+
 echo "Starting system setup..."
 
 # Update system
@@ -91,15 +165,21 @@ sudo pacman -S --noconfirm discord obsidian
 
 # Set up Git configuration
 echo "Setting up Git configuration..."
-git config --global user.email "linus.breitenberger@gmail.com"
-git config --global user.name "Linus"
+git config --global user.email "GIT_USER_EMAIL"
+git config --global user.name "GIT_USER_NAME"
 
 # Set up password manager
 echo "Setting up password manager..."
 mkdir -p ~/.password-store
 pass git init
-# The following line is commented out as it requires your server to be set up
-# pass git remote add origin kexec.com:pass-store
+
+# check whether pass-store is set, warn if not
+if [ -n "${PASS_STORE_GIT_REMOTE}" ]; then
+    log_info "Setting up password store remote at ${PASS_STORE_GIT_REMOTE}"
+    pass git remote add origin "${PASS_STORE_GIT_REMOTE}"
+else
+    log_warning "No password store remote specified in .env, skipping remote setup"
+fi
 
 # Set up Neovim
 log_info "Setting up Neovim..."
